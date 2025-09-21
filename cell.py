@@ -14,6 +14,3 @@ class Cell:
             pygame.draw.rect(screen, "orange", (self.x_cor, self.y_cor, self.width, self.height))
         elif self.cell_type == 1:
             pygame.draw.rect(screen, "black", (self.x_cor, self.y_cor, self.width, self.height))
-
-def around(x, base):
-    return base * round(x/base)
