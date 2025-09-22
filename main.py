@@ -1,4 +1,6 @@
-import pygame, cell, time
+import pygame, cell
+from time import time 
+from random import randint
 
 # pygame setup
 pygame.init()
@@ -21,8 +23,6 @@ maze = [
     [0,0,1,1,0,0,1,0,1,0],
     [1,0,0,0,1,1,0,0,0,1]
 ]
-
-import random
 
 maze = [[random.randint(0, 1) for _ in range(100)] for _ in range(100)]
 
