@@ -9,8 +9,11 @@ class Cell:
         self.y_cor = y_cor
 
     def draw(self, screen):
-        print(self.x_cor, self.y_cor)
+        #print(self.x_cor, self.y_cor)
         if self.cell_type == 0:
-            pygame.draw.rect(screen, "orange", (self.x_cor, self.y_cor, self.width, self.height))
+            pygame.draw.rect(screen, pygame.Color("springgreen4"), (self.x_cor, self.y_cor, self.width, self.height))
         elif self.cell_type == 1:
-            pygame.draw.rect(screen, "black", (self.x_cor, self.y_cor, self.width, self.height))
+            pygame.draw.rect(screen, "gray10", (self.x_cor, self.y_cor, self.width, self.height))
+
+    def make_path(self, screen):
+        pygame.draw.rect(screen, pygame.Color("springgreen4"), (self.x_cor, self.y_cor, self.width, self.height))
