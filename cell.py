@@ -17,3 +17,6 @@ class Cell:
 
     def make_path(self, screen):
         pygame.draw.rect(screen, pygame.Color("springgreen4"), (self.x_cor, self.y_cor, self.width, self.height))
+
+    def color_current_pos(self, screen):
+        pygame.draw.rect(screen, pygame.Color("darkorange1"), (self.x_cor, self.y_cor, self.width, self.height))
