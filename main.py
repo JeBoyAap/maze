@@ -3,8 +3,8 @@ import cell
 import generator
 
 #config
-DELAY_FRAMES = True
-MAX_FPS = 1 #max fps
+DELAY_FRAMES = False
+MAX_FPS = 2 #max fps
 
 USE_SEED = False
 SEED = 2
@@ -75,9 +75,11 @@ for y, row in enumerate(maze):
 
 screen.fill("grey")
 
+#setup
 cell_index = 0
 clock = pygame.time.Clock()
 current_pos = STARTING_POS
+prev_pos = None
 traceback = 0
 
 has_drawn_grid = False
@@ -112,7 +114,7 @@ while running:
         has_drawn_grid = True
 
     if current_pos is not None:
-        current_pos, traceback = generator.maze_generator(traceback, current_pos, cells, cell_width, cell_height, screen, GRID_SIZE_X, GRID_SIZE_Y)
+        current_pos, prev_pos  = generator.maze_generator(current_pos, prev_pos, cells, screen, GRID_SIZE_X, GRID_SIZE_Y)
         pygame.display.flip()
 
     elif current_pos is None and not maze_done:
