@@ -112,7 +112,7 @@ while running:
         has_drawn_grid = True
 
     if current_pos is not None:
-        current_pos, traceback = generator.maze_generator(traceback, current_pos, cells, cell_width, cell_height, screen, GRID_SIZE_X, GRID_SIZE_Y)
+        current_pos, traceback = generator.maze_generator(traceback, current_pos, cells, screen, GRID_SIZE_X, GRID_SIZE_Y)
         pygame.display.flip()
 
     elif current_pos is None and not maze_done:
