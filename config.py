@@ -1,4 +1,4 @@
-DELAY_FRAMES = True
+DELAY_FRAMES = False
 FPS = 30 #max fps when delaying frames
 MAX_FPS = 2 #max fps when holding space
 
@@ -9,7 +9,7 @@ STARTING_POS = (1,1)
 
 CELL_PIXEL_SIZE = 5
 
-FULLSCREEN = False
+FULLSCREEN = True
 
 #use when windowed
 X_CELLS = 50
