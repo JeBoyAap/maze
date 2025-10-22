@@ -1,129 +1,131 @@
 import pygame, time
 import cell
 import generator
+import config as c
 
-#config
-DELAY_FRAMES = False
-MAX_FPS = 2 #max fps
+def setup_config():
+    cfg = {
+        "DELAY_FRAMES": c.DELAY_FRAMES,
+        "MAX_FPS": c.MAX_FPS,
+        "USE_SEED": c.USE_SEED,
+        "SEED": c.SEED,
+        "STARTING_POS": c.STARTING_POS,
+        "CELL_PIXEL_SIZE": c.CELL_PIXEL_SIZE,
+        "FULLSCREEN": c.FULLSCREEN,
+        "FPS": c.FPS
+    }
 
-USE_SEED = False
-SEED = 2
+    #screen and grid dimensions
+    if cfg["FULLSCREEN"]:
+        cfg["X_CELLS"] = 1920 // cfg["CELL_PIXEL_SIZE"]
+        cfg["Y_CELLS"] = 1080 // cfg["CELL_PIXEL_SIZE"]
+        cfg["SCREEN_WIDTH"], cfg["SCREEN_HEIGHT"] = 1920, 1080
+    else:
+        cfg["X_CELLS"] = c.X_CELLS
+        cfg["Y_CELLS"] = c.Y_CELLS
+        cfg["SCREEN_WIDTH"] = cfg["CELL_PIXEL_SIZE"] * cfg["X_CELLS"]
+        cfg["SCREEN_HEIGHT"] = cfg["CELL_PIXEL_SIZE"] * cfg["Y_CELLS"]
 
-STARTING_POS = (1,1)
+    # make grid_size uneven
+    if cfg["X_CELLS"] % 2 == 0:
+        cfg["GRID_SIZE_X"] = cfg["X_CELLS"] - 1
+    else:
+        cfg["GRID_SIZE_X"] = cfg["X_CELLS"]
+    if cfg["Y_CELLS"] % 2 == 0:
+        cfg["GRID_SIZE_Y"] = cfg["Y_CELLS"] - 1
+    else:
+        cfg["GRID_SIZE_Y"] = cfg["Y_CELLS"]
 
-CELL_PIXEL_SIZE = 5
-
-FULLSCREEN = False
-
-if FULLSCREEN:
-    X_CELLS = 1920 // CELL_PIXEL_SIZE
-    Y_CELLS = 1080 // CELL_PIXEL_SIZE
-else:
-    X_CELLS = 50
-    Y_CELLS = 50
-
-
-
-# pygame setup
-pygame.init()
-
-#make grid_size uneven
-GRID_SIZE_X = int(X_CELLS)
-if GRID_SIZE_X % 2 == 0:
-    GRID_SIZE_X -= 1
-GRID_SIZE_Y = int(Y_CELLS)
-if GRID_SIZE_Y % 2 == 0:
-    GRID_SIZE_Y -= 1
-
-#calculate screen dimensions
-if FULLSCREEN:
-    SCREEN_HEIGHT = 1080
-    SCREEN_WIDTH = 1920
-else:
-    SCREEN_HEIGHT = CELL_PIXEL_SIZE * GRID_SIZE_Y
-    SCREEN_WIDTH = CELL_PIXEL_SIZE * GRID_SIZE_X
-
-generator.init_maze(GRID_SIZE_X, GRID_SIZE_Y, USE_SEED, SEED)
+    return cfg
 
 
-if FULLSCREEN:
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-else:
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-running = True
 
-cell_width = int(SCREEN_WIDTH / GRID_SIZE_X)
-cell_height = int(SCREEN_HEIGHT / GRID_SIZE_Y)
+def setup_pygame(cfg):
+    # pygame setup
+    pygame.init()
 
+    if cfg["FULLSCREEN"]:
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode((cfg["SCREEN_WIDTH"], cfg["SCREEN_HEIGHT"]))
+    screen.fill("grey")
 
-#set al cells to walls
-maze = [[1 for _ in range(GRID_SIZE_X)] for _ in range(GRID_SIZE_Y)]
+    return screen, pygame.time.Clock()
 
-#create entrance and exit
-maze[0][1] = 0
-maze[GRID_SIZE_Y - 1][GRID_SIZE_X - 2] = 0
+def create_maze_grid(cfg):
+    #set al cells to walls
+    maze = [[1 for _ in range(cfg["GRID_SIZE_X"])] for _ in range(cfg["GRID_SIZE_Y"])]
 
+    #create entrance and exit
+    maze[0][1] = 0
+    maze[-1][-2] = 0
 
-#all cels in a dict for quick lookup using (x, y) position
-cells = {}
-for y, row in enumerate(maze):
-    for x, value in enumerate(row):
-        x_cor = x * cell_width
-        y_cor = y * cell_height
-        maze_cell = cell.Cell(value, cell_width, cell_height, x_cor, y_cor)
-        cells[(x, y)] = maze_cell
+    cell_width = cfg["SCREEN_WIDTH"] // cfg["GRID_SIZE_X"]
+    cell_height = cfg["SCREEN_HEIGHT"] // cfg["GRID_SIZE_Y"]
 
-screen.fill("grey")
+    #all cels in a dict for quick lookup using (x, y) position
+    cells = {}
+    for y, row in enumerate(maze):
+        for x, value in enumerate(row):
+            x_cor = x * cell_width
+            y_cor = y * cell_height
+            maze_cell = cell.Cell(value, cell_width, cell_height, x_cor, y_cor)
+            cells[(x, y)] = maze_cell
 
-#setup
-cell_index = 0
-clock = pygame.time.Clock()
-current_pos = STARTING_POS
-prev_pos = None
-traceback = 0
-
-has_drawn_grid = False
-FPS = 30
-
-#start timing
-maze_done = False
-start_time = time.time()
-
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                DELAY_FRAMES = True
-                FPS = MAX_FPS
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                DELAY_FRAMES = False
-                FPS = 15
-
-    #keypresses
-    if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-        running = False
+    return cells
 
 
-    if not has_drawn_grid:
-        for cell in cells.values():
-            cell.draw(screen)
-        has_drawn_grid = True
-
-    if current_pos is not None:
-        current_pos, prev_pos  = generator.maze_generator(current_pos, prev_pos, cells, screen, GRID_SIZE_X, GRID_SIZE_Y)
-        pygame.display.flip()
-
-    elif current_pos is None and not maze_done:
-        end_time = time.time()
-        print(f"Final time is: {end_time - start_time:.4} seconds")
-        maze_done = True
+def main():
+    cfg = setup_config()
+    generator.init_maze(cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"], cfg["USE_SEED"], cfg["SEED"])
+    screen, clock = setup_pygame(cfg)
+    cells = create_maze_grid(cfg)
 
 
-    if DELAY_FRAMES:
-        clock.tick(FPS)
+    #draw starting grid
+    for cell in cells.values():
+        cell.draw(screen)
 
-pygame.quit()
+    # setup
+    current_pos = cfg["STARTING_POS"]
+    prev_pos = None
+    running = True
+
+    #start timing
+    maze_done = False
+    start_time = time.time()
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_SPACE:
+                    cfg["DELAY_FRAMES"] = True
+                    cfg["FPS"] = cfg["MAX_FPS"]
+
+            elif event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                cfg["DELAY_FRAMES"] = False
+                cfg["FPS"] = c.FPS
+
+
+        if current_pos is not None:
+            current_pos, prev_pos = generator.maze_generator(current_pos, prev_pos, cells, screen, cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"])
+            pygame.display.flip()
+
+        elif not maze_done:
+            end_time = time.time()
+            print(f"Final time is: {end_time - start_time:.4f} seconds")
+            maze_done = True
+
+        if cfg["DELAY_FRAMES"]:
+            clock.tick(cfg["FPS"])
+
+    pygame.quit()
+
+
+#run maze generator
+main()
