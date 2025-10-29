@@ -1,18 +1,34 @@
 import pygame, time
 import cell
 import generator
+import solver
 import config as c
+
+
 
 def setup_config():
     cfg = {
+        #main stuff
         "DELAY_FRAMES": c.DELAY_FRAMES,
         "MAX_FPS": c.MAX_FPS,
-        "USE_SEED": c.USE_SEED,
-        "SEED": c.SEED,
         "STARTING_POS": c.STARTING_POS,
         "CELL_PIXEL_SIZE": c.CELL_PIXEL_SIZE,
         "FULLSCREEN": c.FULLSCREEN,
-        "FPS": c.FPS
+        "FPS": c.FPS,
+        "NEIGHBOUR_CHOICE": c.NEIGHBOUR_CHOICE,
+
+        #randomness
+        "GEN_USE_SEED": c.GEN_USE_SEED,
+        "GEN_SEED": c.GEN_SEED,
+        "SOLV_USE_SEED": c.SOLV_USE_SEED,
+        "SOLV_SEED": c.SOLV_SEED,
+
+        #cell stuff
+        "PATH_COLOR": c.PATH_COLOR,  # springgreen4
+        "WALL_COLOR": c.WALL_COLOR,  # gray10
+        "POS_COLOR": c.POS_COLOR,  # darkorange1
+        "VISITED_COLOR": c.VISITED_COLOR,  # orange
+        "SOLUTION_COLOR": c.SOLUTION_COLOR  # orangered
     }
 
     #screen and grid dimensions
@@ -69,33 +85,37 @@ def create_maze_grid(cfg):
         for x, value in enumerate(row):
             x_cor = x * cell_width
             y_cor = y * cell_height
-            maze_cell = cell.Cell(value, cell_width, cell_height, x_cor, y_cor)
+            maze_cell = cell.Cell(value, cell_width, cell_height, x_cor, y_cor, cfg["PATH_COLOR"], cfg["WALL_COLOR"], cfg["POS_COLOR"], cfg["VISITED_COLOR"], cfg["SOLUTION_COLOR"])
             cells[(x, y)] = maze_cell
 
-    return cells
+    return cells, maze
 
 
 def main():
     cfg = setup_config()
-    generator.init_maze(cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"], cfg["USE_SEED"], cfg["SEED"])
+    generator.init_maze(cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"], cfg["GEN_USE_SEED"], cfg["GEN_SEED"])
+    solver.init_solver(cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"], cfg["SOLV_USE_SEED"], cfg["SOLV_SEED"], cfg["NEIGHBOUR_CHOICE"])
     screen, clock = setup_pygame(cfg)
-    cells = create_maze_grid(cfg)
+    cells, maze = create_maze_grid(cfg)
 
 
     #draw starting grid
-    for cell in cells.values():
-        cell.draw(screen)
+    for grid_cell in cells.values():
+        grid_cell.draw(screen)
 
     # setup
     current_pos = cfg["STARTING_POS"]
-    prev_pos = None
+    solver_pos = (1, 0)
     running = True
 
     #start timing
+    gen_end_time, solv_end_time = None, None
     maze_done = False
+    solution_done = False
     start_time = time.time()
 
     while running:
+        #events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -111,19 +131,30 @@ def main():
                 cfg["DELAY_FRAMES"] = False
                 cfg["FPS"] = c.FPS
 
-
+        #maze generator
         if current_pos is not None:
-            current_pos, prev_pos = generator.maze_generator(current_pos, prev_pos, cells, screen, cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"])
+            current_pos, maze = generator.maze_generator(current_pos, cells, screen, cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"])
             pygame.display.flip()
 
         elif not maze_done:
-            end_time = time.time()
-            print(f"Final time is: {end_time - start_time:.4f} seconds")
+            gen_end_time = time.time()
+            print(f"Generating time is: {gen_end_time - start_time:.4f} seconds")
             maze_done = True
+
+        #solver
+        if maze_done and solver_pos is not None:
+            solver_pos = solver.maze_solver(solver_pos, cells, screen, cfg["GRID_SIZE_X"], cfg["GRID_SIZE_Y"], maze)
+            pygame.display.flip()
+
+        elif maze_done and not solution_done:
+            solv_end_time = time.time()
+            print(f"Solution time is: {solv_end_time - gen_end_time:.4f} seconds")
+            print(f"Final time is: {solv_end_time - start_time:.4f} seconds")
+            solution_done = True
+
 
         if cfg["DELAY_FRAMES"]:
             clock.tick(cfg["FPS"])
-
     pygame.quit()
 
 

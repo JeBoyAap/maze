@@ -12,7 +12,11 @@ def init_maze(grid_size_x, grid_size_y, use_seed, seed):
     if use_seed:
         random.seed(seed)
 
-def maze_generator(current_pos, prev_pos, cells, screen, grid_size_x, grid_size_y):
+def maze_generator(current_pos, cells, screen, grid_size_x, grid_size_y):
+    # create entrance and exit
+    maze[0][1] = 0
+    maze[-1][-2] = 0
+
     current_x, current_y = current_pos
     visited[current_y][current_x] = True
     neighbours = find_neighbours(current_pos, grid_size_x, grid_size_y)
@@ -22,6 +26,10 @@ def maze_generator(current_pos, prev_pos, cells, screen, grid_size_x, grid_size_
     if len(neighbours) > 0:
         goal_pos = random.choice(neighbours)
         wall_pos = ((goal_pos[0] + current_pos[0]) // 2, (goal_pos[1] + current_pos[1]) // 2)
+        goal_x, goal_y = goal_pos
+        maze[goal_y][goal_x] = 0
+        wall_x, wall_y = wall_pos
+        maze[wall_y][wall_x] = 0
 
         if goal_pos in cells:
             cells[goal_pos].make_path(screen)
@@ -37,14 +45,14 @@ def maze_generator(current_pos, prev_pos, cells, screen, grid_size_x, grid_size_
         if not traceback_stack:
             if prev_pos in cells:
                 cells[prev_pos].make_path(screen)
-            return None, None
+            return None, maze
         else:
             current_pos = traceback_stack.pop()
     if current_pos in cells:
         cells[current_pos].color_current_pos(screen)
     if prev_pos in cells:
         cells[prev_pos].make_path(screen)
-    return current_pos, prev_pos
+    return current_pos, None
 
 def find_neighbours(current_pos, grid_size_x, grid_size_y):
     current_x, current_y = current_pos
